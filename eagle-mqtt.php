@@ -30,20 +30,22 @@
 
 	function translateXML() {
 		$rawData = http_get_request_body();
-		$xmlData = simplexml_load_string($rawData);
-		if ($xmlData) {
-			// Only process InstantaneousDemand tags
-			$idVal = $xmlData->InstantaneousDemand;
-			if (defined($idVal)) {
-				$dem = hexdec($idVal->Demand);
-				$mul = hexdec($idVal->Multiplier);
-				$div = hexdec($idVal->Divisor);
-
-				$mul = ($mul == 0) ? 1 : $mul;
-				$div = ($div == 0) ? 1 : $div;
-
-				$powerKW = $dem*$mul/$div;
-				return $powerKW*1000;	// power in Watts
+		if (strlen($rawData) > 0) {
+			$xmlData = simplexml_load_string($rawData);
+			if ($xmlData) {
+				// Only process InstantaneousDemand tags
+				$idVal = $xmlData->InstantaneousDemand;
+				if (defined($idVal)) {
+					$dem = hexdec($idVal->Demand);
+					$mul = hexdec($idVal->Multiplier);
+					$div = hexdec($idVal->Divisor);
+	
+					$mul = ($mul == 0) ? 1 : $mul;
+					$div = ($div == 0) ? 1 : $div;
+	
+					$powerKW = $dem*$mul/$div;
+					return $powerKW*1000;	// power in Watts
+				}
 			}
 		}
 		return false;
