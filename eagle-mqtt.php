@@ -29,7 +29,7 @@
 	}
 
 	function translateXML() {
-		$rawData = http_get_request_body();
+		$rawData = file_get_contents("php://input");
 		if (strlen($rawData) > 0) {
 			$xmlData = simplexml_load_string($rawData);
 			if ($xmlData) {
