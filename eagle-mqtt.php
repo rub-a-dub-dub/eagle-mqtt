@@ -19,23 +19,24 @@
 	 */
 
 	function sendToBroker($saveValue) {
-		$mqtt = new phpMQTT($mqtthost, $mqttport, $mqttclient, $mqttuser, $mqttpwd);
-		$value = rand();
-
-		if ($mqtt->connect()) {
-			$mqtt->publish($mqtttopic, $value, $mqttqos);
+		global $mqtthost, $mqttport, $mqttuser, $mqttpwd, $mqttclient, $mqtttopic, $mqttqos;
+		$mqtt = new phpMQTT($mqtthost, $mqttport, $mqttclient);
+		if ($mqtt->connect(true, NULL, $mqttuser, $mqttpwd)) {
+			$mqtt->publish($mqtttopic, $saveValue, $mqttqos);
 			$mqtt->close();
+			return true;
 		}
+		return false;
 	}
 
 	function translateXML() {
 		$rawData = file_get_contents("php://input");
 		if (strlen($rawData) > 0) {
 			$xmlData = simplexml_load_string($rawData);
-			if ($xmlData) {
+			if ($xmlData !== false) {
 				// Only process InstantaneousDemand tags
 				$idVal = $xmlData->InstantaneousDemand;
-				if (defined($idVal)) {
+				if (!empty($idVal)) {
 					$dem = hexdec($idVal->Demand);
 					$mul = hexdec($idVal->Multiplier);
 					$div = hexdec($idVal->Divisor);
@@ -53,8 +54,11 @@
 
 	if ($saveValue = translateXML()) {
 		// Able to correctly parse the XML fragment sent
-		sendToBroker($saveValue);
-		// We don't let users know anything about the success or failure
-	}
+		if (sendToBroker($saveValue))
+			header("HTTP/1.1 200 OK");
+		else
+			header("HTTP/1.1 503 Service Unavailable");
+	} else
+		header("HTTP/1.1 400 Bad Request");
 
 ?>
